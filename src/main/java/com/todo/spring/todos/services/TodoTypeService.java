@@ -1,21 +1,19 @@
-package com.todo.spring.services;
+package com.todo.spring.todos.services;
 
-import com.todo.spring.models.TodoType;
-import com.todo.spring.repository.TodoTypesRepository;
+import com.todo.spring.todos.models.TodoType;
+import com.todo.spring.todos.repositories.TodoTypesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.annotation.Resource;
-
-@Service("CreateTodoTypeService")
-public class CreateTodoTypeService {
+@Service()
+public class TodoTypeService {
 
     @Autowired
     private TodoTypesRepository todoTypesRepository;
 
-    public TodoType execute(String name) {
+    public TodoType create(String name) {
         TodoType checkTodoTypeAlreadyExists = todoTypesRepository.findOneByName(name);
 
         if (checkTodoTypeAlreadyExists == null) {
@@ -23,7 +21,7 @@ public class CreateTodoTypeService {
             return todoTypesRepository.save(todoType);
         } else {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Todo type have already been created"
+                    HttpStatus.BAD_REQUEST, "Todo type has already been created"
             );
         }
     }

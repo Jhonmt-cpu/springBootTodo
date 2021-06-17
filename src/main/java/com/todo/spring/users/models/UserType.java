@@ -1,29 +1,26 @@
-package com.todo.spring.models;
+package com.todo.spring.users.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-@Entity(name = "todo_types")
-public class TodoType {
+@Entity(name = "user_types")
+public class UserType {
     @Id
-    @Type(type = "org.hibernate.type.PostgresUUIDType")
-    @GeneratedValue(generator = "uuid4")
-    @GenericGenerator(name = "uuid4", strategy = "org.hibernate.id.UUIDGenerator")
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column
+    @NotEmpty(message = "User type name cannot be empty")
     private String name;
 
     @Column(name = "created_at")

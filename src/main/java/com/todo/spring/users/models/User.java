@@ -1,4 +1,4 @@
-package com.todo.spring.models;
+package com.todo.spring.users.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,16 +32,27 @@ public class User {
     @Column
     private String password;
 
-    @ManyToOne()
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "type_id", referencedColumnName = "id", updatable = false, insertable = false)
     private UserType userType;
 
     @Column(name = "type_id")
-    private UUID typeId;
+    private Long typeId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

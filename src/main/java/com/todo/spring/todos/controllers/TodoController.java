@@ -1,12 +1,16 @@
-package com.todo.spring.controller;
+package com.todo.spring.todos.controllers;
 
-import com.todo.spring.models.Todo;
-import com.todo.spring.repository.TodoRepository;
+import com.todo.spring.todos.dtos.CreateTodoDTO;
+import com.todo.spring.todos.models.Todo;
+import com.todo.spring.todos.repositories.TodoRepository;
+import com.todo.spring.todos.services.TodoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,12 +22,13 @@ public class TodoController {
     @Autowired
     private TodoRepository todoRepository;
 
+    @Resource
+    private TodoService todoService;
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Todo create(@RequestBody Todo todo) {
-        todo.setCreatedAt(LocalDateTime.now());
-        todo.setUpdatedAt(LocalDateTime.now());
-        return  todoRepository.save(todo);
+    public Todo create(@Valid @RequestBody CreateTodoDTO createTodoDTO) {
+        return todoService.create(createTodoDTO);
     }
 
     @GetMapping("/{id}")

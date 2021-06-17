@@ -1,6 +1,6 @@
-package com.todo.spring.repository;
+package com.todo.spring.todos.repositories;
 
-import com.todo.spring.models.Todo;
+import com.todo.spring.todos.models.Todo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,5 +1,6 @@
-package com.todo.spring.models;
+package com.todo.spring.todos.models;
 
+import com.todo.spring.users.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,6 +26,7 @@ public class Todo {
     private UUID id;
 
     @Column(nullable = false)
+    @NotEmpty(message = "Todo title cannot be empty")
     private String title;
 
     @Column()
@@ -34,6 +37,7 @@ public class Todo {
     private User user;
 
     @Column(name = "user_id")
+    @Type(type = "org.hibernate.type.PostgresUUIDType")
     private UUID userId;
 
     @ManyToOne()
@@ -41,11 +45,22 @@ public class Todo {
     private TodoType todoType;
 
     @Column(name = "type_id")
-    private UUID typeId;
+    private Long typeId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
