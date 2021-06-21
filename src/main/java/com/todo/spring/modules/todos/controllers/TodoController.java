@@ -35,13 +35,13 @@ public class TodoController {
         return todoService.update(userId, todoId, todo);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable UUID id) {
-        todoService.delete(id);
+    @DeleteMapping("/{userId}/{todoId}")
+    public void delete(@PathVariable UUID userId, @PathVariable UUID todoId) {
+        todoService.delete(userId, todoId);
     }
 
-    @GetMapping()
-    public List<Todo> list(@RequestParam(required = false) String title) {
-        return todoService.list(title);
+    @GetMapping("/{userId}")
+    public List<Todo> list(@PathVariable UUID userId ,@RequestParam(required = false) String title) {
+        return todoService.list(userId, title);
     }
 }

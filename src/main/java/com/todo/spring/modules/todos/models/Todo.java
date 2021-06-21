@@ -1,7 +1,5 @@
 package com.todo.spring.modules.todos.models;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.todo.spring.modules.users.models.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

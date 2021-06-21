@@ -1,30 +1,29 @@
 package com.todo.spring.modules.todos.dtos;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
-public class UpdateRemoteTodoDTO {
-    private UUID id;
+public class GetRemoteTodo {
+    private String id;
 
     private String title;
 
     private String description;
 
-    private UUID userId;
+    private String localOwner;
+
+    private String userId;
 
     private Long typeId;
 
-    private String localOwner = "Jão";
+    private LocalDateTime createdAt;
 
-    private String updatedAt;
+    private LocalDateTime updatedAt;
 
-    private String createdAt;
 }

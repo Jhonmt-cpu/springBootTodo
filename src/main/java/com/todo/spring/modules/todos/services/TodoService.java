@@ -1,9 +1,7 @@
 package com.todo.spring.modules.todos.services;
 
-import com.todo.spring.modules.todos.dtos.CreateRemoteTodoDTO;
-import com.todo.spring.modules.todos.dtos.CreateTodoDTO;
-import com.todo.spring.modules.todos.dtos.UpdateRemoteTodoDTO;
-import com.todo.spring.modules.todos.dtos.UpdateTodoDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.todo.spring.modules.todos.dtos.*;
 import com.todo.spring.modules.todos.models.Todo;
 import com.todo.spring.modules.todos.repositories.TodoRepository;
 import com.todo.spring.modules.todos.repositories.TodoTypesRepository;
@@ -11,6 +9,8 @@ import com.todo.spring.modules.users.models.User;
 import com.todo.spring.modules.users.repository.UsersRepository;
 import com.todo.spring.shared.utils.RestService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -18,15 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TodoService {
@@ -40,8 +39,9 @@ public class TodoService {
     @Autowired
     private TodoTypesRepository todoTypesRepository;
 
-    @Resource
-    private RestService restService;
+    @Autowired
+    @Qualifier("RemoteTodoClient")
+    private RestTemplate restTemplate;
 
     public Todo create(CreateTodoDTO createTodoDTO) {
         User checkUserExists = usersRepository.findById(createTodoDTO.getUserId()).orElseThrow(() -> new ResponseStatusException(
@@ -66,11 +66,11 @@ public class TodoService {
                     .updatedAt(LocalDateTime.now().toString())
                     .build();
 
-            HttpEntity<CreateRemoteTodoDTO> entity = new HttpEntity<>(remoteTodo, restService.getDefaultHeaders());
+            HttpEntity<CreateRemoteTodoDTO> entity = new HttpEntity<CreateRemoteTodoDTO>(remoteTodo);
 
             try {
-                ResponseEntity<Todo> response = restService.getRestTemplate().postForEntity(
-                        restService.getBaseUrl() + "/todo",
+                ResponseEntity<Todo> response = restTemplate.postForEntity(
+                        restTemplate + "/todo",
                         entity,
                         Todo.class
                 );
@@ -99,13 +99,9 @@ public class TodoService {
         ));
 
         if (checkUserExists.getTypeId() == 2) {
-            HttpEntity entity = new HttpEntity<>(restService.getDefaultHeaders());
-
             try {
-                ResponseEntity<Todo> response = this.restService.getRestTemplate().exchange(
-                        restService.getBaseUrl() + "/todo/" + todoId,
-                        HttpMethod.GET,
-                        entity,
+                ResponseEntity<Todo> response = this.restTemplate.getForEntity(
+                        "/todo/" + todoId,
                         Todo.class
                 );
 
@@ -138,13 +134,9 @@ public class TodoService {
         }
 
         if (checkUserExists.getTypeId() == 2) {
-            HttpEntity entity = new HttpEntity<>(restService.getDefaultHeaders());
-
             try {
-                ResponseEntity<UpdateRemoteTodoDTO> response = this.restService.getRestTemplate().exchange(
-                        restService.getBaseUrl() + "/todo/" + todoId,
-                        HttpMethod.GET,
-                        entity,
+                ResponseEntity<UpdateRemoteTodoDTO> response = this.restTemplate.getForEntity(
+                        "/todo/" + todoId,
                         UpdateRemoteTodoDTO.class
                 );
 
@@ -156,17 +148,23 @@ public class TodoService {
                 todoForUpdate.setTypeId(todo.getTypeId());
                 todoForUpdate.setUpdatedAt(LocalDateTime.now().toString());
 
-                HttpEntity<UpdateRemoteTodoDTO> putEntity = new HttpEntity<>(todoForUpdate, restService.getDefaultHeaders());
+                HttpEntity<UpdateRemoteTodoDTO> putEntity = new HttpEntity<>(todoForUpdate);
 
                 try {
-                    ResponseEntity<Todo> putResponse = restService.getRestTemplate().exchange(
-                            restService.getBaseUrl() + "/todo",
-                            HttpMethod.PUT,
-                            putEntity,
-                            Todo.class
+                    restTemplate.put(
+                            "/todo",
+                            putEntity
                     );
 
-                    return putResponse.getBody();
+                    return Todo.builder()
+                            .title(todoForUpdate.getTitle())
+                            .id(todoForUpdate.getId())
+                            .typeId(todoForUpdate.getTypeId())
+                            .description(todoForUpdate.getDescription())
+                            .userId(todoForUpdate.getUserId())
+                            .createdAt(LocalDateTime.parse(todoForUpdate.getCreatedAt()))
+                            .updatedAt(LocalDateTime.parse(todoForUpdate.getUpdatedAt()))
+                            .build();
                 } catch (HttpClientErrorException error) {
                     throw new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Failed to update the todo, try again later"
@@ -196,8 +194,41 @@ public class TodoService {
         return todoRepository.save(checkLocalTodoExists);
     }
 
-    public void delete(UUID id) {
-        boolean checkTodoExists = todoRepository.existsById(id);
+    public void delete(UUID userId ,UUID todoId) {
+        User checkUserExists = usersRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User doesn't exists"
+                )
+        );
+
+        if (checkUserExists.getTypeId() == 2) {
+            try {
+                ResponseEntity<Todo> response = this.restTemplate.getForEntity(
+                        "/todo/" + todoId,
+                        Todo.class
+                );
+
+                UUID remoteTodoId = Objects.requireNonNull(response.getBody()).getId();
+
+                try {
+                    restTemplate.delete(
+                            "/todo/" + remoteTodoId
+                    );
+                } catch (HttpClientErrorException error) {
+                    throw new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Failed to delete the todo, try again later"
+                    );
+                }
+            } catch (HttpClientErrorException error) {
+                Todo checkLocalTodoExists = todoRepository.findById(todoId).orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Todo doesn't exists"
+                ));
+
+                todoRepository.delete(checkLocalTodoExists);
+            }
+
+        }
+        boolean checkTodoExists = todoRepository.existsById(todoId);
 
         if (!checkTodoExists) {
             throw new ResponseStatusException(
@@ -205,10 +236,59 @@ public class TodoService {
             );
         }
 
-        todoRepository.deleteById(id);
+        todoRepository.deleteById(todoId);
     }
 
-    public List<Todo> list(String title) {
+    public List<Todo> list(UUID userId ,String title) {
+        User checkUserExists = usersRepository.findById(userId).orElseThrow(
+                () -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User doesn't exists"
+                )
+        );
+
+        if (checkUserExists.getTypeId() == 2) {
+            try {
+                ResponseEntity<GetRemoteTodo[]> response = restTemplate.getForEntity(
+                        "/todo",
+                        GetRemoteTodo[].class
+                );
+
+                GetRemoteTodo[] remoteTodos = response.getBody();
+
+                assert remoteTodos != null;
+                List<GetRemoteTodo> jaoRemotesTodos = Arrays.stream(remoteTodos)
+                        .filter(todo -> "Jão".equals(todo.getLocalOwner()))
+                        .collect(Collectors.toList());
+
+                List<Todo> todos = jaoRemotesTodos.stream().map(
+                        jaoTD -> Todo.builder()
+                                .title(jaoTD.getTitle())
+                                .id(UUID.fromString(jaoTD.getId()))
+                                .description(jaoTD.getDescription())
+                                .userId(UUID.fromString(jaoTD.getUserId()))
+                                .typeId(jaoTD.getTypeId())
+                                .createdAt(jaoTD.getCreatedAt())
+                                .updatedAt(jaoTD.getUpdatedAt())
+                                .build()
+                ).collect(Collectors.toList());
+
+                if (title == null) {
+                    todos.addAll(todoRepository.findAll());
+                    return todos;
+                }
+
+                List<Todo> todosWithTitle = todos.stream()
+                        .filter(todo -> todo.getTitle().contains(title))
+                        .collect(Collectors.toList());
+
+                todosWithTitle.addAll(todoRepository.findByTitleContainingIgnoreCase(title));
+                return todos;
+            } catch (HttpClientErrorException error) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Failed to get the todo list, try again later"
+                );
+            }
+        }
         if (title != null) {
             return todoRepository.findByTitleContainingIgnoreCase(title);
         } else {

@@ -32,7 +32,7 @@ public class User {
     @Column
     private String password;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne()
     @JoinColumn(name = "type_id", referencedColumnName = "id", updatable = false, insertable = false)
     private UserType userType;
 
