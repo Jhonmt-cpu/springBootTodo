@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service()
@@ -31,12 +32,18 @@ public class UserService {
     }
 
     public User turnPremium(UUID id) {
-        User checkUserExists = usersRepository.findById(id).orElseThrow(() -> new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "User not found"
-        ));
+        Optional<User> checkUserExists = usersRepository.findById(id);
 
-        checkUserExists.setTypeId(2L);
+        if (checkUserExists.isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "User not found"
+            );
+        }
 
-        return usersRepository.save(checkUserExists);
+        User user = checkUserExists.get();
+
+        user.setTypeId(2L);
+
+        return usersRepository.save(user);
     }
 }

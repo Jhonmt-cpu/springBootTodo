@@ -1,6 +1,7 @@
 package com.todo.spring.modules.todos.dtos;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class UpdateTodoDTO {
     @NotEmpty(message = "Todo title cannot be empty")
     private String title;
