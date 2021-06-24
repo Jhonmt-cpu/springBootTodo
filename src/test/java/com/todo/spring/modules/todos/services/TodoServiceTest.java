@@ -1,6 +1,7 @@
 package com.todo.spring.modules.todos.services;
 
 import com.todo.spring.modules.todos.dtos.CreateTodoDTO;
+import com.todo.spring.modules.todos.dtos.GetRemoteTodo;
 import com.todo.spring.modules.todos.dtos.UpdateRemoteTodoDTO;
 import com.todo.spring.modules.todos.dtos.UpdateTodoDTO;
 import com.todo.spring.modules.todos.errors.*;
@@ -18,13 +19,15 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
+import java.sql.Array;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
@@ -56,6 +59,12 @@ class TodoServiceTest {
     private Todo updatedLocalTodoTest;
 
     private Todo updatedRemoteTodoTest;
+
+    private List<Todo> localTodos;
+
+    private List<Todo> localTodosByTitle;
+
+    private List<Todo> remoteTodosParsed;
 
     @BeforeEach
     private void openMocks() {
@@ -92,7 +101,7 @@ class TodoServiceTest {
 
         remoteTodoTest = Todo.builder()
                 .id(UUID.randomUUID())
-                .title("Default Remote Test")
+                .title("Default Remote Todo Test")
                 .description("Remote Todo for tests")
                 .typeId(1L)
                 .userId(userPremiumTest.getId())
@@ -119,6 +128,61 @@ class TodoServiceTest {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+
+        Todo localTodo = Todo.builder()
+                .id(UUID.randomUUID())
+                .title("Local todo 1 test")
+                .description("Local Todo for tests")
+                .typeId(1L)
+                .userId(userDefaultTest.getId())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        Todo anotherLocalTodo = Todo.builder()
+                .id(UUID.randomUUID())
+                .title("Local todo 1 test")
+                .description("Todo 2 test")
+                .typeId(1L)
+                .userId(userDefaultTest.getId())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+
+        localTodos = new ArrayList<>();
+        localTodos.add(localTodoTest);
+        localTodos.add(localTodo);
+        localTodos.add(anotherLocalTodo);
+
+        localTodosByTitle = new ArrayList<>();
+        localTodosByTitle.add(localTodoTest);
+        localTodosByTitle.add(localTodo);
+
+
+        Todo remoteTodo1 = Todo.builder()
+                .id(remoteTodoTest.getId())
+                .title("Remote todo 1 test")
+                .description("Remote Todo for tests")
+                .typeId(1L)
+                .userId(userPremiumTest.getId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        Todo remoteTodo2 = Todo.builder()
+                .id(remoteTodoTest.getId())
+                .title("Todo 2 test")
+                .description("Remote Todo for tests")
+                .typeId(1L)
+                .userId(userPremiumTest.getId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        remoteTodosParsed = new ArrayList<>();
+        remoteTodosParsed.add(remoteTodoTest);
+        remoteTodosParsed.add(remoteTodo1);
+        remoteTodosParsed.add(remoteTodo2);
     }
 
     private void userDefaultExistsById() {
@@ -166,9 +230,19 @@ class TodoServiceTest {
                 .thenReturn(Optional.of(localTodoTest));
     }
 
+    private void booleanLocalTodoExistsById() {
+        when(todoRepository.existsById(any()))
+                .thenReturn(true);
+    }
+
     private void localTodoDoesNotExistsById() {
         when(todoRepository.findById(any()))
                 .thenReturn(Optional.empty());
+    }
+
+    private void booleanLocalTodoDoesNotExistsById() {
+        when(todoRepository.existsById(any()))
+                .thenReturn(false);
     }
 
     private void remoteTodoExistsById() {
@@ -209,6 +283,71 @@ class TodoServiceTest {
         doThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND))
                 .when(remoteTodoRepository)
                 .update(any());
+    }
+
+    private void deleteRemoteTodoError() {
+        doThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND))
+                .when(remoteTodoRepository)
+                .delete(any());
+    }
+
+    private void returnAllLocalTodos() {
+        when(todoRepository.findAll())
+                .thenReturn(localTodos);
+    }
+
+    private void returnLocalTodosByTitle() {
+        when(todoRepository.findByTitleContainingIgnoreCase(anyString()))
+                .thenReturn(localTodosByTitle);
+    }
+
+    private void returnEmptyLocalTodos() {
+        when(todoRepository.findByTitleContainingIgnoreCase(anyString()))
+                .thenReturn(new ArrayList<>());
+    }
+
+    private void returnAllRemoteTodos() {
+        GetRemoteTodo getRemoteTodo = GetRemoteTodo.builder()
+                .id(remoteTodoTest.getId().toString())
+                .title(remoteTodoTest.getTitle())
+                .description(remoteTodoTest.getDescription())
+                .localOwner("Jão")
+                .userId(remoteTodoTest.getUserId().toString())
+                .typeId(remoteTodoTest.getTypeId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        GetRemoteTodo getRemoteTodo1 = GetRemoteTodo.builder()
+                .id(remoteTodoTest.getId().toString())
+                .title("Remote todo 1 test")
+                .description(remoteTodoTest.getDescription())
+                .localOwner("Jão")
+                .userId(remoteTodoTest.getUserId().toString())
+                .typeId(remoteTodoTest.getTypeId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        GetRemoteTodo getRemoteTodo2 = GetRemoteTodo.builder()
+                .id(remoteTodoTest.getId().toString())
+                .title("Todo 2 test")
+                .description(remoteTodoTest.getDescription())
+                .localOwner("Jão")
+                .userId(remoteTodoTest.getUserId().toString())
+                .typeId(remoteTodoTest.getTypeId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        GetRemoteTodo[] getRemoteTodos = {getRemoteTodo, getRemoteTodo1, getRemoteTodo2};
+        when(remoteTodoRepository.list())
+                .thenReturn(getRemoteTodos);
+    }
+
+    private void listRemoteTodosError() {
+        when(remoteTodoRepository.list())
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
     }
 
     @Test
@@ -539,10 +678,152 @@ class TodoServiceTest {
     }
 
     @Test
-    void delete() {
+    void deleteLocalTodo() {
+        userDefaultExistsById();
+        booleanLocalTodoExistsById();
+
+        assertDoesNotThrow(() -> service.delete(userDefaultTest.getId(), localTodoTest.getId()));
     }
 
     @Test
-    void list() {
+    void deleteRemoteTodo() {
+        userPremiumExistsById();
+        remoteTodoExistsById();
+
+        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
+    }
+
+    @Test
+    void shouldDeleteTodoIfItDoesNotExistsInTheRemoteApiButExistsInLocal() {
+        userPremiumExistsById();
+        remoteTodoDoesNotExistsById();
+        booleanLocalTodoExistsById();
+
+        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
+    }
+
+    @Test
+    void shouldNotDeleteAnyTodoIfUserDoesNotExists() {
+        userDoesNotExistsById();
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> service.delete(UUID.randomUUID(), localTodoTest.getId())
+        );
+    }
+
+    @Test
+    void shouldNotDeleteLocalTodoIfItDoesNotExists() {
+        userDefaultExistsById();
+        booleanLocalTodoDoesNotExistsById();
+
+        assertThrows(
+                TodoNotFoundException.class,
+                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void shouldNotDeleteTodoIfItDoesNotExistsRemotelyOrLocally() {
+        userPremiumExistsById();
+        remoteTodoDoesNotExistsById();
+        booleanLocalTodoDoesNotExistsById();
+
+        assertThrows(
+                TodoNotFoundException.class,
+                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
+        );
+    }
+
+    @Test
+    void shouldNotDeleteRemoteTodoIfDeleteRemoteTodoFails() {
+        userPremiumExistsById();
+        remoteTodoExistsById();
+        deleteRemoteTodoError();
+
+        assertThrows(
+                FailedToDeleteRemoteTodoException.class,
+                () -> service.delete(userDefaultTest.getId(), localTodoTest.getId())
+        );
+    }
+
+    @Test
+    void listAllLocalTodos() {
+        userDefaultExistsById();
+        returnAllLocalTodos();
+
+        List<Todo> todos = service.list(userDefaultTest.getId(), null);
+
+        assertEquals(localTodos, todos);
+    }
+
+    @Test
+    void listLocalTodosByTitle() {
+        userDefaultExistsById();
+        returnLocalTodosByTitle();
+
+        List<Todo> todos = service.list(userDefaultTest.getId(), "local");
+
+        assertEquals(localTodosByTitle, todos);
+    }
+
+    @Test
+    void listRemoteTodos() {
+        userPremiumExistsById();
+        returnAllRemoteTodos();
+        returnAllLocalTodos();
+
+        List<Todo> todos = service.list(userPremiumTest.getId(), null);
+
+        List<Todo> expectTodoListResponse = remoteTodosParsed;
+        expectTodoListResponse.addAll(localTodos);
+
+        assertEquals(expectTodoListResponse, todos);
+    }
+
+    @Test
+    void listRemoteTodosByTitle() {
+        userPremiumExistsById();
+        returnAllRemoteTodos();
+        returnEmptyLocalTodos();
+
+        List<Todo> todos = service.list(userPremiumTest.getId(), "remote");
+
+        Todo remoteTodo1 = Todo.builder()
+                .id(remoteTodoTest.getId())
+                .title("Remote todo 1 test")
+                .description("Remote Todo for tests")
+                .typeId(1L)
+                .userId(userPremiumTest.getId())
+                .createdAt(remoteTodoTest.getCreatedAt())
+                .updatedAt(remoteTodoTest.getUpdatedAt())
+                .build();
+
+        List<Todo> expectTodoListResponse = new ArrayList<>();
+        expectTodoListResponse.add(remoteTodoTest);
+        expectTodoListResponse.add(remoteTodo1);
+
+        assertEquals(expectTodoListResponse, todos);
+    }
+
+    @Test
+    void shouldNotListAnyTodosIfUserDoesNotExists() {
+        userDoesNotExistsById();
+
+        assertThrows(
+                UserNotFoundException.class,
+                () -> service.list(UUID.randomUUID(), null)
+        );
+    }
+
+    @Test
+    void shouldNotListRemoteTodosIfListRemoteFails() {
+        userPremiumExistsById();
+        listRemoteTodosError();
+
+        assertThrows(
+                FailedToGetRemoteTodoListException.class,
+                () -> service.list(userPremiumTest.getId(), null)
+        );
     }
 }

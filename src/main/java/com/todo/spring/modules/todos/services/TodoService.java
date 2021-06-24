@@ -9,10 +9,8 @@ import com.todo.spring.modules.todos.repositories.TodoTypesRepository;
 import com.todo.spring.modules.users.models.User;
 import com.todo.spring.modules.users.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -183,13 +181,15 @@ public class TodoService {
     }
 
     public void delete(UUID userId ,UUID todoId) {
-        User checkUserExists = usersRepository.findById(userId).orElseThrow(
-                () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User doesn't exists"
-                )
-        );
+        Optional<User> checkUserExists = usersRepository.findById(userId);
 
-        if (checkUserExists.getTypeId() == 2) {
+        if (checkUserExists.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        User user = checkUserExists.get();
+
+        if (user.getTypeId() == 2) {
             try {
                 Todo todo = remoteTodoRepository.getById(todoId);
 
@@ -199,38 +199,38 @@ public class TodoService {
                     remoteTodoRepository.delete(remoteTodoId);
                     return;
                 } catch (HttpClientErrorException error) {
-                    throw new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Failed to delete the todo, try again later"
-                    );
+                    throw new FailedToDeleteRemoteTodoException();
                 }
             } catch (HttpClientErrorException error) {
-                Todo checkLocalTodoExists = todoRepository.findById(todoId).orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Todo doesn't exists"
-                ));
+                boolean checkTodoExists = todoRepository.existsById(todoId);
 
-                todoRepository.delete(checkLocalTodoExists);
+                if (!checkTodoExists) {
+                    throw new TodoNotFoundException();
+                }
+
+                todoRepository.deleteById(todoId);
             }
 
         }
         boolean checkTodoExists = todoRepository.existsById(todoId);
 
         if (!checkTodoExists) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Todo doesn't exists"
-            );
+            throw new TodoNotFoundException();
         }
 
         todoRepository.deleteById(todoId);
     }
 
     public List<Todo> list(UUID userId ,String title) {
-        User checkUserExists = usersRepository.findById(userId).orElseThrow(
-                () -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "User doesn't exists"
-                )
-        );
+        Optional<User> checkUserExists = usersRepository.findById(userId);
 
-        if (checkUserExists.getTypeId() == 2) {
+        if (checkUserExists.isEmpty()) {
+            throw new UserNotFoundException();
+        }
+
+        User user = checkUserExists.get();
+
+        if (user.getTypeId() == 2) {
             try {
                 GetRemoteTodo[] remoteTodos = remoteTodoRepository.list();
 
@@ -256,15 +256,13 @@ public class TodoService {
                 }
 
                 List<Todo> todosWithTitle = todos.stream()
-                        .filter(todo -> todo.getTitle().contains(title))
+                        .filter(todo -> todo.getTitle().toLowerCase(Locale.ROOT).contains(title.toLowerCase(Locale.ROOT)))
                         .collect(Collectors.toList());
 
                 todosWithTitle.addAll(todoRepository.findByTitleContainingIgnoreCase(title));
-                return todos;
+                return todosWithTitle;
             } catch (HttpClientErrorException error) {
-                throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Failed to get the todo list, try again later"
-                );
+                throw new FailedToGetRemoteTodoListException();
             }
         }
         if (title != null) {
