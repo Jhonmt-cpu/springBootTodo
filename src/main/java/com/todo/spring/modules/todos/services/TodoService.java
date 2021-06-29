@@ -1,11 +1,12 @@
 package com.todo.spring.modules.todos.services;
 
 import com.todo.spring.modules.todos.dtos.*;
-import com.todo.spring.modules.todos.errors.*;
+import com.todo.spring.modules.todos.exceptions.*;
 import com.todo.spring.modules.todos.models.Todo;
 import com.todo.spring.modules.todos.repositories.RemoteTodoRepository;
 import com.todo.spring.modules.todos.repositories.TodoRepository;
 import com.todo.spring.modules.todos.repositories.TodoTypesRepository;
+import com.todo.spring.modules.users.exceptions.UserNotFoundException;
 import com.todo.spring.modules.users.models.User;
 import com.todo.spring.modules.users.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;

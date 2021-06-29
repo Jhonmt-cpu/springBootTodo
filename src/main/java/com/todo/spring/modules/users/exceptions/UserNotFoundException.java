@@ -1,4 +1,4 @@
-package com.todo.spring.modules.todos.errors;
+package com.todo.spring.modules.users.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;

@@ -1,13 +1,19 @@
 package com.todo.spring.modules.users.services;
 
+import com.todo.spring.modules.users.dtos.AuthenticateUserDTO;
 import com.todo.spring.modules.users.dtos.CreateUserDTO;
+import com.todo.spring.modules.users.exceptions.InvalidLoginException;
+import com.todo.spring.modules.users.exceptions.UserAlreadyExistsException;
+import com.todo.spring.modules.users.exceptions.UserNotFoundException;
 import com.todo.spring.modules.users.models.User;
 import com.todo.spring.modules.users.repository.UsersRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.constraints.NotNull;
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,13 +23,15 @@ public class UserService {
     @Autowired
     private UsersRepository usersRepository;
 
-    public User create(CreateUserDTO createUserDTO) {
+    private static final String key = "e85267357e1786c1c396743bccd4dfe5";
+
+    long expirationMilis = 8600000L;
+
+    public User create(@NotNull CreateUserDTO createUserDTO) {
         User checkUserAlreadyExists = usersRepository.findOneByEmail(createUserDTO.getEmail());
 
         if (checkUserAlreadyExists != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "User already exists"
-            );
+            throw new UserAlreadyExistsException();
         }
 
         User user = User.builder().name(createUserDTO.getName()).email(createUserDTO.getEmail()).password(createUserDTO.getPassword()).typeId(1L).build();
@@ -35,9 +43,7 @@ public class UserService {
         Optional<User> checkUserExists = usersRepository.findById(id);
 
         if (checkUserExists.isEmpty()) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "User not found"
-            );
+            throw new UserNotFoundException();
         }
 
         User user = checkUserExists.get();
@@ -45,5 +51,28 @@ public class UserService {
         user.setTypeId(2L);
 
         return usersRepository.save(user);
+    }
+
+    public String createSession(AuthenticateUserDTO data) {
+        User checkUserAlreadyExists = usersRepository.findOneByEmail(data.getEmail());
+
+        if (checkUserAlreadyExists == null) {
+            throw new InvalidLoginException();
+        }
+
+        if (!checkUserAlreadyExists.getPassword().equals(data.getPassword())) {
+            throw new InvalidLoginException();
+        }
+
+        long nowMillis = System.currentTimeMillis();
+        Date now = new Date(nowMillis);
+        Date expirationDate = new Date(nowMillis + expirationMilis);
+
+        return Jwts.builder()
+                .setIssuedAt(now)
+                .setSubject("Teste testado")
+                .setExpiration(expirationDate)
+                .signWith(SignatureAlgorithm.HS512, key)
+                .compact();
     }
 }
