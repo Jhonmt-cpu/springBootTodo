@@ -6,8 +6,7 @@ import com.todo.spring.modules.todos.models.Todo;
 import com.todo.spring.modules.todos.repositories.RemoteTodoRepository;
 import com.todo.spring.modules.todos.repositories.TodoRepository;
 import com.todo.spring.modules.todos.repositories.TodoTypesRepository;
-import com.todo.spring.modules.users.exceptions.UserNotFoundException;
-import com.todo.spring.modules.users.models.User;
+import com.todo.spring.modules.users.dtos.UserAuthenticatedDTO;
 import com.todo.spring.modules.users.repository.UsersRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,27 +31,19 @@ public class TodoService {
     @Autowired
     private RemoteTodoRepository remoteTodoRepository;
 
-    public Todo create(CreateTodoDTO createTodoDTO) {
-        Optional<User> checkUserExists = usersRepository.findById(createTodoDTO.getUserId());
-
-        if (checkUserExists.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = checkUserExists.get();
-
+    public Todo create(UserAuthenticatedDTO userAuthenticated, CreateTodoDTO createTodoDTO) {
         boolean checkTodoTypeExists = todoTypesRepository.existsById(createTodoDTO.getTypeId());
 
         if (!checkTodoTypeExists) {
             throw new TodoTypeNotFoundException();
         }
 
-        if (user.getTypeId() == 2) {
+        if (userAuthenticated.getTypeId() >= 2) {
             CreateRemoteTodoDTO remoteTodo = CreateRemoteTodoDTO.builder()
                     .title(createTodoDTO.getTitle())
                     .description(createTodoDTO.getDescription())
                     .localOwner("Jão")
-                    .userId(createTodoDTO.getUserId())
+                    .userId(userAuthenticated.getId())
                     .typeId(createTodoDTO.getTypeId())
                     .updatedAt(LocalDateTime.now().toString())
                     .build();
@@ -68,22 +59,14 @@ public class TodoService {
                 .title(createTodoDTO.getTitle())
                 .description(createTodoDTO.getDescription())
                 .typeId(createTodoDTO.getTypeId())
-                .userId(createTodoDTO.getUserId())
+                .userId(userAuthenticated.getId())
                 .build();
 
         return todoRepository.save(todo);
     }
 
-    public Todo show(UUID todoId, UUID userId) {
-        Optional<User> checkUserExists = usersRepository.findById(userId);
-
-        if (checkUserExists.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = checkUserExists.get();
-
-        if (user.getTypeId() == 2) {
+    public Todo show(UserAuthenticatedDTO userAuthenticated, UUID todoId) {
+        if (userAuthenticated.getTypeId() >= 2) {
             try {
                 return remoteTodoRepository.getById(todoId);
             } catch (HttpClientErrorException error) {
@@ -106,22 +89,14 @@ public class TodoService {
         return todo.get();
     }
 
-    public Todo update(UUID userId ,UUID todoId, UpdateTodoDTO todo) {
-        Optional<User> checkUserExists = usersRepository.findById(userId);
-
-        if (checkUserExists.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = checkUserExists.get();
-
+    public Todo update(UserAuthenticatedDTO userAuthenticated ,UUID todoId, UpdateTodoDTO todo) {
         boolean checkTodoTypeExists = todoTypesRepository.existsById(todo.getTypeId());
 
         if (!checkTodoTypeExists) {
             throw new TodoTypeNotFoundException();
         }
 
-        if (user.getTypeId() == 2) {
+        if (userAuthenticated.getTypeId() >= 2) {
             try {
                 UpdateRemoteTodoDTO todoForUpdate = remoteTodoRepository.getByIdForUpdate(todoId);
 
@@ -181,16 +156,8 @@ public class TodoService {
         return todoRepository.save(localTodo);
     }
 
-    public void delete(UUID userId ,UUID todoId) {
-        Optional<User> checkUserExists = usersRepository.findById(userId);
-
-        if (checkUserExists.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = checkUserExists.get();
-
-        if (user.getTypeId() == 2) {
+    public void delete(UserAuthenticatedDTO userAuthenticated ,UUID todoId) {
+        if (userAuthenticated.getTypeId() >= 2) {
             try {
                 Todo todo = remoteTodoRepository.getById(todoId);
 
@@ -222,16 +189,8 @@ public class TodoService {
         todoRepository.deleteById(todoId);
     }
 
-    public List<Todo> list(UUID userId ,String title) {
-        Optional<User> checkUserExists = usersRepository.findById(userId);
-
-        if (checkUserExists.isEmpty()) {
-            throw new UserNotFoundException();
-        }
-
-        User user = checkUserExists.get();
-
-        if (user.getTypeId() == 2) {
+    public List<Todo> list(UserAuthenticatedDTO userAuthenticated, String title) {
+        if (userAuthenticated.getTypeId() >= 2) {
             try {
                 GetRemoteTodo[] remoteTodos = remoteTodoRepository.list();
 

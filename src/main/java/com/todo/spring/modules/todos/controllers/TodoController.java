@@ -4,7 +4,9 @@ import com.todo.spring.modules.todos.dtos.CreateTodoDTO;
 import com.todo.spring.modules.todos.dtos.UpdateTodoDTO;
 import com.todo.spring.modules.todos.models.Todo;
 import com.todo.spring.modules.todos.services.TodoService;
+import com.todo.spring.modules.users.dtos.UserAuthenticatedDTO;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -22,26 +24,43 @@ public class TodoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Todo create(@Valid @RequestBody CreateTodoDTO createTodoDTO) {
-        return todoService.create(createTodoDTO);
+        UserAuthenticatedDTO userAuthenticated = (UserAuthenticatedDTO) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return todoService.create(userAuthenticated, createTodoDTO);
     }
 
-    @GetMapping("/{userId}/{todoId}")
-    public Todo show(@PathVariable UUID userId, @PathVariable UUID todoId) {
-        return todoService.show(todoId, userId);
+    @GetMapping("/{todoId}")
+    public Todo show(@PathVariable UUID todoId) {
+        UserAuthenticatedDTO userAuthenticated = (UserAuthenticatedDTO) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return todoService.show(userAuthenticated, todoId);
     }
 
-    @PutMapping("/{userId}/{todoId}")
-    public Todo update(@PathVariable UUID userId, @PathVariable UUID todoId, @Valid  @RequestBody UpdateTodoDTO todo) {
-        return todoService.update(userId, todoId, todo);
+    @PutMapping("/{todoId}")
+    public Todo update(
+            @PathVariable UUID todoId,
+            @Valid  @RequestBody UpdateTodoDTO todo) {
+        UserAuthenticatedDTO userAuthenticated = (UserAuthenticatedDTO) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return todoService.update(userAuthenticated, todoId, todo);
     }
 
-    @DeleteMapping("/{userId}/{todoId}")
-    public void delete(@PathVariable UUID userId, @PathVariable UUID todoId) {
-        todoService.delete(userId, todoId);
+    @DeleteMapping("/{todoId}")
+    public void delete(@PathVariable UUID todoId) {
+        UserAuthenticatedDTO userAuthenticated = (UserAuthenticatedDTO) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        todoService.delete(userAuthenticated, todoId);
     }
 
-    @GetMapping("/{userId}")
-    public List<Todo> list(@PathVariable UUID userId ,@RequestParam(required = false) String title) {
-        return todoService.list(userId, title);
+    @GetMapping()
+    public List<Todo> list(@RequestParam(required = false) String title) {
+        UserAuthenticatedDTO userAuthenticated = (UserAuthenticatedDTO) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return todoService.list(userAuthenticated, title);
     }
 }

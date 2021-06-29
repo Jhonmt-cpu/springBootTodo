@@ -15,20 +15,14 @@ import java.util.UUID;
 public class UserAuthenticatedDTO {
     private UUID id;
 
-    private String name;
-
     private String email;
-
-    private String token;
 
     private Long typeId;
 
-    public static UserAuthenticatedDTO toDTO(User user, String token) {
+    public static UserAuthenticatedDTO toDTO(User user) {
         return UserAuthenticatedDTO.builder()
                 .id(user.getId())
-                .name(user.getName())
                 .email(user.getEmail())
-                .token(token)
                 .typeId(user.getTypeId())
                 .build();
     }

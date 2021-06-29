@@ -350,480 +350,480 @@ class TodoServiceTest {
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
     }
 
-    @Test
-    void createLocalTodo() {
-        userDefaultExistsById();
-        todoTypeExistsById();
-        saveLocalTodo();
-
-        CreateTodoDTO newTodo = CreateTodoDTO.builder()
-                .title(localTodoTest.getTitle())
-                .description(localTodoTest.getDescription())
-                .typeId(localTodoTest.getTypeId())
-                .userId(localTodoTest.getUserId())
-                .build();
-
-        Todo todo = service.create(newTodo);
-
-        assertEquals(localTodoTest.getTitle(), todo.getTitle());
-        assertEquals(localTodoTest.getDescription(), todo.getDescription());
-        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(localTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void createRemoteTodo() {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        saveRemoteTodo();
-
-        CreateTodoDTO newTodo = CreateTodoDTO.builder()
-                .title(remoteTodoTest.getTitle())
-                .description(remoteTodoTest.getDescription())
-                .typeId(remoteTodoTest.getTypeId())
-                .userId(remoteTodoTest.getUserId())
-                .build();
-
-        Todo todo = service.create(newTodo);
-
-        assertEquals(remoteTodoTest.getTitle(), todo.getTitle());
-        assertEquals(remoteTodoTest.getDescription(), todo.getDescription());
-        assertEquals(remoteTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(remoteTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void shouldNotCreateAnyTodoIfUserDoesNotExists() {
-        userDoesNotExistsById();
-
-        CreateTodoDTO newTodo = CreateTodoDTO.builder()
-                .title(localTodoTest.getTitle())
-                .description(localTodoTest.getDescription())
-                .typeId(localTodoTest.getTypeId())
-                .userId(UUID.randomUUID())
-                .build();
-
-        assertThrows(UserNotFoundException.class, () -> service.create(newTodo));
-    }
-
-    @Test
-    void shouldNotCreateAnyTodoIfTodoTypeDoesNotExists() {
-        userDefaultExistsById();
-        todoTypeDoesNotExistsById();
-
-        CreateTodoDTO newTodo = CreateTodoDTO.builder()
-                .title(localTodoTest.getTitle())
-                .description(localTodoTest.getDescription())
-                .typeId(6165654L)
-                .userId(localTodoTest.getUserId())
-                .build();
-
-        assertThrows(TodoTypeNotFoundException.class, () -> service.create(newTodo));
-    }
-
-    @Test
-    void shouldNotCreateRemoteTodoIfRegisterRemoteTodoFails() {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        saveRemoteTodoError();
-
-        CreateTodoDTO newTodo = CreateTodoDTO.builder()
-                .title(remoteTodoTest.getTitle())
-                .description(remoteTodoTest.getDescription())
-                .typeId(remoteTodoTest.getTypeId())
-                .userId(remoteTodoTest.getUserId())
-                .build();
-
-        assertThrows(FailedToRegisterRemoteTodoException.class, () -> service.create(newTodo));
-    }
-
-    @Test
-    void showLocalTodo() {
-        userDefaultExistsById();
-        localTodoExistsById();
-
-        Todo todo = service.show(localTodoTest.getId(), userDefaultTest.getId());
-
-        assertEquals(localTodoTest.getTitle(), todo.getTitle());
-        assertEquals(localTodoTest.getDescription(), todo.getDescription());
-        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(localTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void showRemoteTodo() {
-        userPremiumExistsById();
-        remoteTodoExistsById();
-
-        Todo todo = service.show(remoteTodoTest.getId(), userPremiumTest.getId());
-
-        assertEquals(remoteTodoTest.getTitle(), todo.getTitle());
-        assertEquals(remoteTodoTest.getDescription(), todo.getDescription());
-        assertEquals(remoteTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(remoteTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void shouldShowRemoteTodoIfItDoesNotExistsInTheRemoteAPIButItDoesExistsInLocal() {
-        userPremiumExistsById();
-        remoteTodoDoesNotExistsById();
-        localTodoExistsById();
-
-        Todo todo = service.show(localTodoTest.getId(), userPremiumTest.getId());
-
-        assertEquals(localTodoTest.getTitle(), todo.getTitle());
-        assertEquals(localTodoTest.getDescription(), todo.getDescription());
-        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(localTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void shouldNotShowAnyTodoIfUserDoesNotExists() {
-        userDoesNotExistsById();
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
-        );
-    }
-
-    @Test
-    void shouldNotShowLocalTodoIfItDoesNotExists () {
-        userDefaultExistsById();
-        localTodoDoesNotExistsById();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
-        );
-    }
-
-    @Test
-    void shouldNotShowAnyTodoIfItDoesNotExistsInTheRemoteApiAndLocal () {
-        userPremiumExistsById();
-        remoteTodoDoesNotExistsById();
-        localTodoDoesNotExistsById();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
-        );
-    }
-
-    @Test
-    void updateLocalTodo() {
-        userDefaultExistsById();
-        todoTypeExistsById();
-        localTodoExistsById();
-        updateLocalTodoDB();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(updatedLocalTodoTest.getTypeId())
-                .build();
-
-        Todo todo = service.update(userDefaultTest.getId(), updatedLocalTodoTest.getId(), updateTodo);
-
-        assertEquals(updatedLocalTodoTest.getTitle(), todo.getTitle());
-        assertEquals(updatedLocalTodoTest.getDescription(), todo.getDescription());
-        assertEquals(updatedLocalTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(updatedLocalTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void updateRemoteTodo() {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        remoteTodoExistsForUpdateById();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedRemoteTodoTest.getTitle())
-                .description(updatedRemoteTodoTest.getDescription())
-                .typeId(updatedRemoteTodoTest.getTypeId())
-                .build();
-
-        Todo todo = service.update(userPremiumTest.getId(), updatedRemoteTodoTest.getId(), updateTodo);
-
-        assertEquals(updatedRemoteTodoTest.getTitle(), todo.getTitle());
-        assertEquals(updatedRemoteTodoTest.getDescription(), todo.getDescription());
-        assertEquals(updatedRemoteTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(updatedRemoteTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void shouldUpdateTodoIfITDoesNotExistsInTheRemoteApiButExistsInLocal() {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        remoteTodoDoesNotExistsForUpdateById();
-        localTodoExistsById();
-        updateLocalTodoDB();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(updatedLocalTodoTest.getTypeId())
-                .build();
-
-        Todo todo = service.update(userPremiumTest.getId(), updatedLocalTodoTest.getId(), updateTodo);
-
-        assertEquals(updatedLocalTodoTest.getTitle(), todo.getTitle());
-        assertEquals(updatedLocalTodoTest.getDescription(), todo.getDescription());
-        assertEquals(updatedLocalTodoTest.getTypeId(), todo.getTypeId());
-        assertEquals(updatedLocalTodoTest.getUserId(), todo.getUserId());
-    }
-
-    @Test
-    void shouldNotUpdateAnyTodoIfUserDoesNotExists() {
-        userDoesNotExistsById();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(updatedLocalTodoTest.getTypeId())
-                .build();
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> service.update(
-                        UUID.randomUUID(),
-                        updatedLocalTodoTest.getId(),
-                        updateTodo
-                ));
-    }
-
-    @Test
-    void shouldNotUpdateAnyTodoIfTodoTypeDoesNotExists() {
-        userDefaultExistsById();
-        todoTypeDoesNotExistsById();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(1651651L)
-                .build();
-
-        assertThrows(
-                TodoTypeNotFoundException.class,
-                () -> service.update(
-                        userDefaultTest.getId(),
-                        updatedLocalTodoTest.getId(),
-                        updateTodo
-                ));
-    }
-
-    @Test
-    void shouldNotUpdateLocalTodoIfItDoesNotExists() {
-        userDefaultExistsById();
-        todoTypeExistsById();
-        localTodoDoesNotExistsById();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(updatedLocalTodoTest.getTypeId())
-                .build();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.update(
-                        userDefaultTest.getId(),
-                        UUID.randomUUID(),
-                        updateTodo
-                ));
-    }
-
-    @Test
-    void shouldNotUpdateRemoteTodoIfUpdateRemoteTodoFails() {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        remoteTodoExistsForUpdateById();
-        updateRemoteTodoError();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedRemoteTodoTest.getTitle())
-                .description(updatedRemoteTodoTest.getDescription())
-                .typeId(updatedRemoteTodoTest.getTypeId())
-                .build();
-
-        assertThrows(
-                FailedToUpdateRemoteTodoException.class,
-                () -> service.update(
-                        userPremiumTest.getId(),
-                        updatedRemoteTodoTest.getId(),
-                        updateTodo
-                ));
-    }
-
-    @Test
-    void shouldNotUpdateTodoIfItDoesNotExistsRemotelyAndLocally () {
-        userPremiumExistsById();
-        todoTypeExistsById();
-        remoteTodoDoesNotExistsForUpdateById();
-        localTodoDoesNotExistsById();
-
-        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
-                .title(updatedLocalTodoTest.getTitle())
-                .description(updatedLocalTodoTest.getDescription())
-                .typeId(updatedLocalTodoTest.getTypeId())
-                .build();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.update(
-                        userPremiumTest.getId(),
-                        updatedRemoteTodoTest.getId(),
-                        updateTodo
-                ));
-    }
-
-    @Test
-    void deleteLocalTodo() {
-        userDefaultExistsById();
-        booleanLocalTodoExistsById();
-
-        assertDoesNotThrow(() -> service.delete(userDefaultTest.getId(), localTodoTest.getId()));
-    }
-
-    @Test
-    void deleteRemoteTodo() {
-        userPremiumExistsById();
-        remoteTodoExistsById();
-
-        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
-    }
-
-    @Test
-    void shouldDeleteTodoIfItDoesNotExistsInTheRemoteApiButExistsInLocal() {
-        userPremiumExistsById();
-        remoteTodoDoesNotExistsById();
-        booleanLocalTodoExistsById();
-
-        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
-    }
-
-    @Test
-    void shouldNotDeleteAnyTodoIfUserDoesNotExists() {
-        userDoesNotExistsById();
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> service.delete(UUID.randomUUID(), localTodoTest.getId())
-        );
-    }
-
-    @Test
-    void shouldNotDeleteLocalTodoIfItDoesNotExists() {
-        userDefaultExistsById();
-        booleanLocalTodoDoesNotExistsById();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
-        );
-    }
-
-    @Test
-    void shouldNotDeleteTodoIfItDoesNotExistsRemotelyOrLocally() {
-        userPremiumExistsById();
-        remoteTodoDoesNotExistsById();
-        booleanLocalTodoDoesNotExistsById();
-
-        assertThrows(
-                TodoNotFoundException.class,
-                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
-        );
-    }
-
-    @Test
-    void shouldNotDeleteRemoteTodoIfDeleteRemoteTodoFails() {
-        userPremiumExistsById();
-        remoteTodoExistsById();
-        deleteRemoteTodoError();
-
-        assertThrows(
-                FailedToDeleteRemoteTodoException.class,
-                () -> service.delete(userDefaultTest.getId(), localTodoTest.getId())
-        );
-    }
-
-    @Test
-    void listAllLocalTodos() {
-        userDefaultExistsById();
-        returnAllLocalTodos();
-
-        List<Todo> todos = service.list(userDefaultTest.getId(), null);
-
-        assertEquals(localTodos, todos);
-    }
-
-    @Test
-    void listLocalTodosByTitle() {
-        userDefaultExistsById();
-        returnLocalTodosByTitle();
-
-        List<Todo> todos = service.list(userDefaultTest.getId(), "local");
-
-        assertEquals(localTodosByTitle, todos);
-    }
-
-    @Test
-    void listRemoteTodos() {
-        userPremiumExistsById();
-        returnAllRemoteTodos();
-        returnAllLocalTodos();
-
-        List<Todo> todos = service.list(userPremiumTest.getId(), null);
-
-        List<Todo> expectTodoListResponse = remoteTodosParsed;
-        expectTodoListResponse.addAll(localTodos);
-
-        assertEquals(expectTodoListResponse, todos);
-    }
-
-    @Test
-    void listRemoteTodosByTitle() {
-        userPremiumExistsById();
-        returnAllRemoteTodos();
-        returnEmptyLocalTodos();
-
-        List<Todo> todos = service.list(userPremiumTest.getId(), "remote");
-
-        Todo remoteTodo1 = Todo.builder()
-                .id(remoteTodoTest.getId())
-                .title("Remote todo 1 test")
-                .description("Remote Todo for tests")
-                .typeId(1L)
-                .userId(userPremiumTest.getId())
-                .createdAt(remoteTodoTest.getCreatedAt())
-                .updatedAt(remoteTodoTest.getUpdatedAt())
-                .build();
-
-        List<Todo> expectTodoListResponse = new ArrayList<>();
-        expectTodoListResponse.add(remoteTodoTest);
-        expectTodoListResponse.add(remoteTodo1);
-
-        assertEquals(expectTodoListResponse, todos);
-    }
-
-    @Test
-    void shouldNotListAnyTodosIfUserDoesNotExists() {
-        userDoesNotExistsById();
-
-        assertThrows(
-                UserNotFoundException.class,
-                () -> service.list(UUID.randomUUID(), null)
-        );
-    }
-
-    @Test
-    void shouldNotListRemoteTodosIfListRemoteFails() {
-        userPremiumExistsById();
-        listRemoteTodosError();
-
-        assertThrows(
-                FailedToGetRemoteTodoListException.class,
-                () -> service.list(userPremiumTest.getId(), null)
-        );
-    }
+//    @Test
+//    void createLocalTodo() {
+//        userDefaultExistsById();
+//        todoTypeExistsById();
+//        saveLocalTodo();
+//
+//        CreateTodoDTO newTodo = CreateTodoDTO.builder()
+//                .title(localTodoTest.getTitle())
+//                .description(localTodoTest.getDescription())
+//                .typeId(localTodoTest.getTypeId())
+//                .userId(localTodoTest.getUserId())
+//                .build();
+//
+//        Todo todo = service.create(newTodo);
+//
+//        assertEquals(localTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(localTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(localTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void createRemoteTodo() {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        saveRemoteTodo();
+//
+//        CreateTodoDTO newTodo = CreateTodoDTO.builder()
+//                .title(remoteTodoTest.getTitle())
+//                .description(remoteTodoTest.getDescription())
+//                .typeId(remoteTodoTest.getTypeId())
+//                .userId(remoteTodoTest.getUserId())
+//                .build();
+//
+//        Todo todo = service.create(newTodo);
+//
+//        assertEquals(remoteTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(remoteTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(remoteTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(remoteTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void shouldNotCreateAnyTodoIfUserDoesNotExists() {
+//        userDoesNotExistsById();
+//
+//        CreateTodoDTO newTodo = CreateTodoDTO.builder()
+//                .title(localTodoTest.getTitle())
+//                .description(localTodoTest.getDescription())
+//                .typeId(localTodoTest.getTypeId())
+//                .userId(UUID.randomUUID())
+//                .build();
+//
+//        assertThrows(UserNotFoundException.class, () -> service.create(newTodo));
+//    }
+//
+//    @Test
+//    void shouldNotCreateAnyTodoIfTodoTypeDoesNotExists() {
+//        userDefaultExistsById();
+//        todoTypeDoesNotExistsById();
+//
+//        CreateTodoDTO newTodo = CreateTodoDTO.builder()
+//                .title(localTodoTest.getTitle())
+//                .description(localTodoTest.getDescription())
+//                .typeId(6165654L)
+//                .userId(localTodoTest.getUserId())
+//                .build();
+//
+//        assertThrows(TodoTypeNotFoundException.class, () -> service.create(newTodo));
+//    }
+//
+//    @Test
+//    void shouldNotCreateRemoteTodoIfRegisterRemoteTodoFails() {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        saveRemoteTodoError();
+//
+//        CreateTodoDTO newTodo = CreateTodoDTO.builder()
+//                .title(remoteTodoTest.getTitle())
+//                .description(remoteTodoTest.getDescription())
+//                .typeId(remoteTodoTest.getTypeId())
+//                .userId(remoteTodoTest.getUserId())
+//                .build();
+//
+//        assertThrows(FailedToRegisterRemoteTodoException.class, () -> service.create(newTodo));
+//    }
+//
+//    @Test
+//    void showLocalTodo() {
+//        userDefaultExistsById();
+//        localTodoExistsById();
+//
+//        Todo todo = service.show(localTodoTest.getId(), userDefaultTest.getId());
+//
+//        assertEquals(localTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(localTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(localTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void showRemoteTodo() {
+//        userPremiumExistsById();
+//        remoteTodoExistsById();
+//
+//        Todo todo = service.show(remoteTodoTest.getId(), userPremiumTest.getId());
+//
+//        assertEquals(remoteTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(remoteTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(remoteTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(remoteTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void shouldShowRemoteTodoIfItDoesNotExistsInTheRemoteAPIButItDoesExistsInLocal() {
+//        userPremiumExistsById();
+//        remoteTodoDoesNotExistsById();
+//        localTodoExistsById();
+//
+//        Todo todo = service.show(localTodoTest.getId(), userPremiumTest.getId());
+//
+//        assertEquals(localTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(localTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(localTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(localTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void shouldNotShowAnyTodoIfUserDoesNotExists() {
+//        userDoesNotExistsById();
+//
+//        assertThrows(
+//                UserNotFoundException.class,
+//                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotShowLocalTodoIfItDoesNotExists () {
+//        userDefaultExistsById();
+//        localTodoDoesNotExistsById();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotShowAnyTodoIfItDoesNotExistsInTheRemoteApiAndLocal () {
+//        userPremiumExistsById();
+//        remoteTodoDoesNotExistsById();
+//        localTodoDoesNotExistsById();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.show(localTodoTest.getId(), userDefaultTest.getId())
+//        );
+//    }
+//
+//    @Test
+//    void updateLocalTodo() {
+//        userDefaultExistsById();
+//        todoTypeExistsById();
+//        localTodoExistsById();
+//        updateLocalTodoDB();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(updatedLocalTodoTest.getTypeId())
+//                .build();
+//
+//        Todo todo = service.update(userDefaultTest.getId(), updatedLocalTodoTest.getId(), updateTodo);
+//
+//        assertEquals(updatedLocalTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(updatedLocalTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(updatedLocalTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(updatedLocalTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void updateRemoteTodo() {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        remoteTodoExistsForUpdateById();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedRemoteTodoTest.getTitle())
+//                .description(updatedRemoteTodoTest.getDescription())
+//                .typeId(updatedRemoteTodoTest.getTypeId())
+//                .build();
+//
+//        Todo todo = service.update(userPremiumTest.getId(), updatedRemoteTodoTest.getId(), updateTodo);
+//
+//        assertEquals(updatedRemoteTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(updatedRemoteTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(updatedRemoteTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(updatedRemoteTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void shouldUpdateTodoIfITDoesNotExistsInTheRemoteApiButExistsInLocal() {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        remoteTodoDoesNotExistsForUpdateById();
+//        localTodoExistsById();
+//        updateLocalTodoDB();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(updatedLocalTodoTest.getTypeId())
+//                .build();
+//
+//        Todo todo = service.update(userPremiumTest.getId(), updatedLocalTodoTest.getId(), updateTodo);
+//
+//        assertEquals(updatedLocalTodoTest.getTitle(), todo.getTitle());
+//        assertEquals(updatedLocalTodoTest.getDescription(), todo.getDescription());
+//        assertEquals(updatedLocalTodoTest.getTypeId(), todo.getTypeId());
+//        assertEquals(updatedLocalTodoTest.getUserId(), todo.getUserId());
+//    }
+//
+//    @Test
+//    void shouldNotUpdateAnyTodoIfUserDoesNotExists() {
+//        userDoesNotExistsById();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(updatedLocalTodoTest.getTypeId())
+//                .build();
+//
+//        assertThrows(
+//                UserNotFoundException.class,
+//                () -> service.update(
+//                        UUID.randomUUID(),
+//                        updatedLocalTodoTest.getId(),
+//                        updateTodo
+//                ));
+//    }
+//
+//    @Test
+//    void shouldNotUpdateAnyTodoIfTodoTypeDoesNotExists() {
+//        userDefaultExistsById();
+//        todoTypeDoesNotExistsById();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(1651651L)
+//                .build();
+//
+//        assertThrows(
+//                TodoTypeNotFoundException.class,
+//                () -> service.update(
+//                        userDefaultTest.getId(),
+//                        updatedLocalTodoTest.getId(),
+//                        updateTodo
+//                ));
+//    }
+//
+//    @Test
+//    void shouldNotUpdateLocalTodoIfItDoesNotExists() {
+//        userDefaultExistsById();
+//        todoTypeExistsById();
+//        localTodoDoesNotExistsById();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(updatedLocalTodoTest.getTypeId())
+//                .build();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.update(
+//                        userDefaultTest.getId(),
+//                        UUID.randomUUID(),
+//                        updateTodo
+//                ));
+//    }
+//
+//    @Test
+//    void shouldNotUpdateRemoteTodoIfUpdateRemoteTodoFails() {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        remoteTodoExistsForUpdateById();
+//        updateRemoteTodoError();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedRemoteTodoTest.getTitle())
+//                .description(updatedRemoteTodoTest.getDescription())
+//                .typeId(updatedRemoteTodoTest.getTypeId())
+//                .build();
+//
+//        assertThrows(
+//                FailedToUpdateRemoteTodoException.class,
+//                () -> service.update(
+//                        userPremiumTest.getId(),
+//                        updatedRemoteTodoTest.getId(),
+//                        updateTodo
+//                ));
+//    }
+//
+//    @Test
+//    void shouldNotUpdateTodoIfItDoesNotExistsRemotelyAndLocally () {
+//        userPremiumExistsById();
+//        todoTypeExistsById();
+//        remoteTodoDoesNotExistsForUpdateById();
+//        localTodoDoesNotExistsById();
+//
+//        UpdateTodoDTO updateTodo = UpdateTodoDTO.builder()
+//                .title(updatedLocalTodoTest.getTitle())
+//                .description(updatedLocalTodoTest.getDescription())
+//                .typeId(updatedLocalTodoTest.getTypeId())
+//                .build();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.update(
+//                        userPremiumTest.getId(),
+//                        updatedRemoteTodoTest.getId(),
+//                        updateTodo
+//                ));
+//    }
+//
+//    @Test
+//    void deleteLocalTodo() {
+//        userDefaultExistsById();
+//        booleanLocalTodoExistsById();
+//
+//        assertDoesNotThrow(() -> service.delete(userDefaultTest.getId(), localTodoTest.getId()));
+//    }
+//
+//    @Test
+//    void deleteRemoteTodo() {
+//        userPremiumExistsById();
+//        remoteTodoExistsById();
+//
+//        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
+//    }
+//
+//    @Test
+//    void shouldDeleteTodoIfItDoesNotExistsInTheRemoteApiButExistsInLocal() {
+//        userPremiumExistsById();
+//        remoteTodoDoesNotExistsById();
+//        booleanLocalTodoExistsById();
+//
+//        assertDoesNotThrow(() -> service.delete(userPremiumTest.getId(), localTodoTest.getId()));
+//    }
+//
+//    @Test
+//    void shouldNotDeleteAnyTodoIfUserDoesNotExists() {
+//        userDoesNotExistsById();
+//
+//        assertThrows(
+//                UserNotFoundException.class,
+//                () -> service.delete(UUID.randomUUID(), localTodoTest.getId())
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotDeleteLocalTodoIfItDoesNotExists() {
+//        userDefaultExistsById();
+//        booleanLocalTodoDoesNotExistsById();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotDeleteTodoIfItDoesNotExistsRemotelyOrLocally() {
+//        userPremiumExistsById();
+//        remoteTodoDoesNotExistsById();
+//        booleanLocalTodoDoesNotExistsById();
+//
+//        assertThrows(
+//                TodoNotFoundException.class,
+//                () -> service.delete(userDefaultTest.getId(), UUID.randomUUID())
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotDeleteRemoteTodoIfDeleteRemoteTodoFails() {
+//        userPremiumExistsById();
+//        remoteTodoExistsById();
+//        deleteRemoteTodoError();
+//
+//        assertThrows(
+//                FailedToDeleteRemoteTodoException.class,
+//                () -> service.delete(userDefaultTest.getId(), localTodoTest.getId())
+//        );
+//    }
+
+//    @Test
+//    void listAllLocalTodos() {
+//        userDefaultExistsById();
+//        returnAllLocalTodos();
+//
+//        List<Todo> todos = service.list(userDefaultTest.getId(), null);
+//
+//        assertEquals(localTodos, todos);
+//    }
+//
+//    @Test
+//    void listLocalTodosByTitle() {
+//        userDefaultExistsById();
+//        returnLocalTodosByTitle();
+//
+//        List<Todo> todos = service.list(userDefaultTest.getId(), "local");
+//
+//        assertEquals(localTodosByTitle, todos);
+//    }
+//
+//    @Test
+//    void listRemoteTodos() {
+//        userPremiumExistsById();
+//        returnAllRemoteTodos();
+//        returnAllLocalTodos();
+//
+//        List<Todo> todos = service.list(userPremiumTest.getId(), null);
+//
+//        List<Todo> expectTodoListResponse = remoteTodosParsed;
+//        expectTodoListResponse.addAll(localTodos);
+//
+//        assertEquals(expectTodoListResponse, todos);
+//    }
+//
+//    @Test
+//    void listRemoteTodosByTitle() {
+//        userPremiumExistsById();
+//        returnAllRemoteTodos();
+//        returnEmptyLocalTodos();
+//
+//        List<Todo> todos = service.list(userPremiumTest.getId(), "remote");
+//
+//        Todo remoteTodo1 = Todo.builder()
+//                .id(remoteTodoTest.getId())
+//                .title("Remote todo 1 test")
+//                .description("Remote Todo for tests")
+//                .typeId(1L)
+//                .userId(userPremiumTest.getId())
+//                .createdAt(remoteTodoTest.getCreatedAt())
+//                .updatedAt(remoteTodoTest.getUpdatedAt())
+//                .build();
+//
+//        List<Todo> expectTodoListResponse = new ArrayList<>();
+//        expectTodoListResponse.add(remoteTodoTest);
+//        expectTodoListResponse.add(remoteTodo1);
+//
+//        assertEquals(expectTodoListResponse, todos);
+//    }
+//
+//    @Test
+//    void shouldNotListAnyTodosIfUserDoesNotExists() {
+//        userDoesNotExistsById();
+//
+//        assertThrows(
+//                UserNotFoundException.class,
+//                () -> service.list(UUID.randomUUID(), null)
+//        );
+//    }
+//
+//    @Test
+//    void shouldNotListRemoteTodosIfListRemoteFails() {
+//        userPremiumExistsById();
+//        listRemoteTodosError();
+//
+//        assertThrows(
+//                FailedToGetRemoteTodoListException.class,
+//                () -> service.list(userPremiumTest.getId(), null)
+//        );
+//    }
 }

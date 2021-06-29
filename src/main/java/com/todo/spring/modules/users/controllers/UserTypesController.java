@@ -3,6 +3,7 @@ package com.todo.spring.modules.users.controllers;
 import com.todo.spring.modules.users.models.UserType;
 import com.todo.spring.modules.users.services.UserTypeService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;

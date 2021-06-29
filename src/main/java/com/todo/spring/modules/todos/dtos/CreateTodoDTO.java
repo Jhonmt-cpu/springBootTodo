@@ -20,9 +20,6 @@ public class CreateTodoDTO {
     @NotEmpty(message = "Todo description cannot be empty")
     private String description;
 
-    @NotNull(message = "User id is required")
-    private UUID userId;
-
     @NotNull(message = "Type id is required")
     private Long typeId;
 }
