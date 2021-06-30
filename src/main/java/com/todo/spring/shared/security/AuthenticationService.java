@@ -11,7 +11,7 @@ import java.util.UUID;
 public class AuthenticationService {
     private static final String key = "e85267357e1786c1c396743bccd4dfe5";
 
-    private static long expirationMilis = 8600000L;
+    private static long expirationMilis = 2L;
 
     public static String createToken(UUID userId) {
         long nowMillis = System.currentTimeMillis();

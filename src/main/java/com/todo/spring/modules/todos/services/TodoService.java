@@ -23,9 +23,6 @@ public class TodoService {
     private TodoRepository todoRepository;
 
     @Autowired
-    private UsersRepository usersRepository;
-
-    @Autowired
     private TodoTypesRepository todoTypesRepository;
 
     @Autowired
