@@ -1,6 +1,5 @@
 package com.todo.spring.config;
 
-import com.todo.spring.modules.users.repository.UsersRepository;
 import com.todo.spring.shared.security.JwtTokenFilter;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -9,15 +8,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 public class JwtConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
-    private final UsersRepository usersRepository;
-
-    public  JwtConfigurer(UsersRepository usersRepository) {
-        this.usersRepository = usersRepository;
-    }
-
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        JwtTokenFilter customFilter = new JwtTokenFilter(usersRepository);
+        JwtTokenFilter customFilter = new JwtTokenFilter();
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }

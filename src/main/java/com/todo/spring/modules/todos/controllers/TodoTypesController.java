@@ -3,6 +3,8 @@ package com.todo.spring.modules.todos.controllers;
 import com.todo.spring.modules.todos.models.TodoType;
 import com.todo.spring.modules.todos.services.TodoTypeService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;

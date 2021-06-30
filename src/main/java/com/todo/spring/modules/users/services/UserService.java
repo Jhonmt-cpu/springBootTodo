@@ -59,6 +59,6 @@ public class UserService {
             throw new InvalidLoginException();
         }
 
-        return AuthenticationService.createToken(checkUserExists.getId());
+        return AuthenticationService.createToken(checkUserExists);
     }
 }
