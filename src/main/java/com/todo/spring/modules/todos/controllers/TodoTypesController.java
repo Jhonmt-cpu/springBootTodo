@@ -18,6 +18,7 @@ public class TodoTypesController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public TodoType create(@Valid @RequestBody TodoType todoType) {
         return todoTypeService.create(todoType.getName());
     }

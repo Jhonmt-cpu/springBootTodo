@@ -32,9 +32,9 @@ public class JwtTokenFilter extends GenericFilterBean {
 
                 List<SimpleGrantedAuthority> roles = new ArrayList<>();
                 roles.add(new SimpleGrantedAuthority("ROLE_USER"));
-//                if (user.getTypeId() == 3) {
-//                    roles.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-//                }
+                if (user.getTypeId() == 3) {
+                    roles.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                }
 
                 SecurityContextHolder.getContext().setAuthentication(
                         new UsernamePasswordAuthenticationToken(
